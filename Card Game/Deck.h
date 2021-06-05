@@ -1,67 +1,200 @@
 #pragma once
 #include <iostream>
 #include "Cards.h"
-class Deck
-{
-private:
-	Cards c;
-	Deck* nC;
-private:
-	Deck() : c(), nC(nullptr) {}
-	Deck(Cards c) : c(c), nC(nullptr) {}
+namespace {
+	class CardsQueue {
+	public:
+		Cards c;
+		CardsQueue* nC;
 
-public:
-	void append(Deck& deck)
-	{
-		this->nC = &deck;
-	}
-	void pop()
-	{
-		if (this->nC != nullptr)
+	public:
+		CardsQueue() : c(), nC(nullptr) {}
+		CardsQueue(Cards c) : c(c), nC(nullptr) {}
+
+	public:
+		void append(CardsQueue* const card)
 		{
-			*this = *this->nC;
+			this->nC = card;
 		}
-	}
-public:
-	static Deck createDeck()
-	{
-		Deck top;
-		Deck* current = &top;
+		Cards& pop()
+		{
+			Cards& c = this->c;
+			if (this->nC != nullptr)
+			{
+				*this = *this->nC; //flaw? pop doesn't delete the node
+			}
+			else
+			{
+				//delete this;
+				//TO-DO: deleting the last card in the queue should make the prev->nC = nullptr
+				//errors Deck::pickACard
+			}
+			return c;
+		}
 		
+	};
+}
+namespace Deck {
+	class Deck
+	{
+	private:
+		CardsQueue* deckTop;
+		CardsQueue* deckBottom;
+	private:
+		Deck() = delete;
+		Deck(CardsQueue* deckTop, CardsQueue* deckBottom) : deckTop(deckTop), deckBottom(deckBottom) {}
+		Deck(const Deck& other) : deckTop(other.deckTop), deckBottom(other.deckBottom) {}
+		friend Deck* deck52();
+	public:
+		Deck* cut(int at)
+		{
+			CardsQueue* lastOld = nullptr;
+			CardsQueue* firstNew = nullptr;
+			CardsQueue* newCut = this->deckTop;
+			for (int index = 1; index < at; index++)
+			{
+				newCut = newCut->nC;
+			}
+			if (newCut != nullptr)
+			{
+				lastOld = this->deckBottom;
+				this->deckBottom = newCut;
+
+				firstNew = newCut->nC;
+				newCut->nC = nullptr;
+			}
+			else {}
+			return new Deck(firstNew, lastOld);
+		}
+		Deck* cut(int from, int to)
+		{
+			CardsQueue* lastNew = nullptr;
+			CardsQueue* firstNew = nullptr;
+			CardsQueue* newCut = this->deckTop;
+			for (int i = 1; i < from; i++)
+			{
+				newCut = newCut->nC;
+			}
+			lastNew = newCut;
+			for (int i = from; i < to; i++)
+			{
+				lastNew = lastNew->nC;
+			}
+			if (lastNew != nullptr)
+			{
+				firstNew = newCut->nC;
+				newCut->nC = lastNew->nC;
+				lastNew->nC = nullptr;
+				if (this->deckBottom == lastNew)
+				{
+					this->deckBottom = lastNew;
+				}
+				else {}
+			}
+			else {}
+			return new Deck(firstNew, lastNew);
+		}
+		void appened(Deck& other)
+		{
+			this->deckBottom->nC = other.deckTop;
+			this->deckBottom = other.deckBottom;
+			delete& other;
+		}
+		inline void appened(Deck* other)
+		{
+			appened(*other);
+		}
+		void insert(Deck& other, const int& at)
+		{
+			CardsQueue* current = this->deckTop;
+			CardsQueue* post = current->nC;
+			for (int i = 1; i < at; i++)
+			{
+				current = current->nC;
+				post = current->nC;
+			}
+			if (other.deckBottom->nC == nullptr)
+			{
+				current->nC = other.deckTop;
+				other.deckBottom->nC = post;
+			}
+			else
+			{
+				//error
+			}
+		}
+		inline void insert(Deck* other, const int& at)
+		{
+			insert(*other, at);
+		}
+		Cards& pickACard(int&& at)
+		{
+			CardsQueue* current = this->deckTop;
+			for (int i = 1; i < at; i++)
+			{
+				current = current->nC;
+			}
+			return current->pop();
+		}
+		Cards& pickACard(int& size)
+		{
+			return pickACard((rand() % size--) + 1);
+		}
+		Cards& pickACard()
+		{
+			return pickACard((rand() % 52) + 1); //will error 1.9226% of the time. See Cards::Pop()
+		}
+		void ruffle(const int& size = 52, const int& margin = 3) //TO-DO: need fix or re-implementation
+		{
+			CardsQueue* otherA = (this->cut((rand() % (margin * 2)) + (size / 2 - margin)))->deckTop;
+			CardsQueue* otherB = this->deckTop;
+			while (otherA != nullptr && otherB != nullptr)
+			{
+				CardsQueue* temp = otherA->nC;
+				otherA->nC = otherB->nC;
+				otherB->nC = otherA;
+
+				otherA = temp;
+				otherB = otherA->nC;
+			}
+			if (otherB != nullptr)
+			{
+				this->deckBottom = otherA;
+			}
+			else if (otherA != nullptr)
+			{
+				this->deckBottom = otherB;
+			}
+			else {}
+			delete otherA;
+		}
+		void print()
+		{
+			CardsQueue* printNext = this->deckTop;
+			do
+			{
+				std::cout << printNext->c << std::endl;
+				printNext = printNext->nC;
+			} while (printNext != nullptr);
+		}
+	};
+
+	Deck* deck52()
+	{
+		CardsQueue* deckTop = new CardsQueue();
+		CardsQueue* deckBottom = deckTop;
 		Suites suite = Suites::SPADES;
 		Ranks rank = Ranks::ACE;
 		for (int scounter = 0; scounter < NoSUITES; suite++, scounter++)
 		{
 			for (int rcounter = 0; rcounter < NoRANKS; rank++, rcounter++)
 			{
-				current->c = Cards(rank, suite);
-				Deck* tail = new Deck();
-				current->append(*tail);
-				current = tail;
+				CardsQueue* current = new CardsQueue(Cards(rank, suite));
+				deckBottom->append(current);
+				deckBottom = current;
 			}
 		}
-		return top;
+		deckTop->pop();
+		return new Deck(deckTop, deckBottom);
 	}
-	static void printDeck(Deck& deck)
-	{
-		std::cout << deck.c << std::endl;
-		if (deck.nC != nullptr)
-		{
-			printDeck(*deck.nC);
-		}
-	}
-	static Deck& cut(Deck& deck, int at)
-	{
-		Deck* newCut = deck.nC;
-		for (int index = 2; index < at; index++)
-		{
-			newCut = newCut->nC;
-		}
-		if (newCut != nullptr)
-		{
-			Deck& lastOld = *newCut;
-			lastOld.nC = nullptr;
-		}
-		return *newCut;
-	}
-};
+}
