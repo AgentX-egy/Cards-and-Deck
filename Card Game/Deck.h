@@ -31,7 +31,7 @@ namespace {
 			}
 			return c;
 		}
-		
+
 	};
 }
 namespace Deck {
@@ -144,29 +144,40 @@ namespace Deck {
 		{
 			return pickACard((rand() % 52) + 1); //will error 1.9226% of the time. See Cards::Pop()
 		}
-		void ruffle(const int& size = 52, const int& margin = 3) //TO-DO: need fix or re-implementation
+		void ruffle(const int& size = 52, const int& margin = 3)
 		{
-			CardsQueue* otherA = (this->cut((rand() % (margin * 2)) + (size / 2 - margin)))->deckTop;
+			const int cutAt = (rand() % (margin * 2)) + (size / 2 - margin);
+			const Deck* const newCut = this->cut(cutAt);
+			CardsQueue* otherA = newCut->deckTop;
 			CardsQueue* otherB = this->deckTop;
-			while (otherA != nullptr && otherB != nullptr)
+			while (otherA->nC != nullptr && otherB->nC != nullptr)
 			{
 				CardsQueue* temp = otherA->nC;
 				otherA->nC = otherB->nC;
 				otherB->nC = otherA;
 
-				otherA = temp;
 				otherB = otherA->nC;
+				otherA = temp;
 			}
-			if (otherB != nullptr)
+			if (otherB->nC == nullptr)
 			{
-				this->deckBottom = otherA;
+				otherB->nC = otherA;
+				this->deckBottom = newCut->deckBottom;
 			}
-			else if (otherA != nullptr)
+			else if (otherA->nC == nullptr)
 			{
-				this->deckBottom = otherB;
+				CardsQueue* temp = otherB->nC;
+				otherB->nC = otherA;
+				otherA->nC = temp;
 			}
-			else {}
-			delete otherA;
+			else
+			{
+				/* deckBottom will naturally be correct in a perfect ruffle */
+			}
+		}
+		inline void perfectRuffle(const int& size = 52)
+		{
+			ruffle(size, 1);
 		}
 		void print()
 		{
