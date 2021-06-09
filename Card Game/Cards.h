@@ -11,7 +11,7 @@ public:
 		CardID |= (char)suite << 4;
 	}
 	Cards() : CardID(0){};
-	friend std::ostream& operator << (std::ostream& out, const Cards& c);
+	friend std::ostream& operator << (std::ostream& out, const Cards& card);
 
 public:
 	Ranks getRank() const
@@ -30,8 +30,8 @@ public:
 #endif //only in debug mode
 };
 
-std::ostream& operator<<(std::ostream& os, const Cards& c)
+std::ostream& operator<<(std::ostream& os, const Cards& card)
 {
-	os << c.getRank() << " of " << c.getSuite();
+	os << card.getRank() << " of " << card.getSuite();
 	return os;
 }
