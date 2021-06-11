@@ -48,50 +48,76 @@ namespace Deck {
 	public:
 		Deck* cut(int at)
 		{
-			CardsQueue* lastOld = nullptr;
-			CardsQueue* firstNew = nullptr;
-			CardsQueue* newCut = this->deckTop;
-			for (int index = 1; index < at; index++)
+			CardsQueue* lastOld = this->deckBottom;
+			CardsQueue* firstNew = this->deckTop;
+			if (at > 0)
 			{
-				newCut = newCut->nextCard;
-			}
-			if (newCut != nullptr)
-			{
-				lastOld = this->deckBottom;
-				this->deckBottom = newCut;
+				CardsQueue* newCut = firstNew;
+				while (at --> 1 && newCut != lastOld)
+				{
+					newCut = newCut->nextCard;
+				}
+				if (newCut != lastOld)
+				{
+					firstNew = newCut->nextCard;
+					this->deckBottom = newCut;
 
-				firstNew = newCut->nextCard;
-				newCut->nextCard = nullptr;
+					newCut->nextCard = nullptr;
+				}
+				else
+				{
+					lastOld = nullptr;
+					firstNew = nullptr;
+				}
 			}
-			else {}
+			else
+			{
+				this->deckTop = nullptr;
+				this->deckBottom = nullptr;
+			}
 			return new Deck(firstNew, lastOld);
 		}
 		Deck* cut(int from, int to)
 		{
 			CardsQueue* lastNew = nullptr;
 			CardsQueue* firstNew = nullptr;
-			CardsQueue* newCut = this->deckTop;
-			for (int i = 1; i < from; i++)
+			if (from <= to)
 			{
-				newCut = newCut->nextCard;
-			}
-			lastNew = newCut;
-			for (int i = from; i < to; i++)
-			{
-				lastNew = lastNew->nextCard;
-			}
-			if (lastNew != nullptr)
-			{
-				firstNew = newCut->nextCard;
-				newCut->nextCard = lastNew->nextCard;
-				lastNew->nextCard = nullptr;
-				if (this->deckBottom == lastNew)
+				CardsQueue dummy = CardsQueue(); //instead of using CardsQueue* connector = new CardsQueue();
+				CardsQueue* connector = &dummy; // which leads to a memory leak, 'cause I can't delete a CardsQueue for the life of me
+				CardsQueue* traverser = this->deckTop;
+				if (from != 0)
 				{
-					this->deckBottom = lastNew;
+					to -= from;
+					while (from --> 1 && traverser != this->deckBottom)
+					{
+						traverser = traverser->nextCard;
+					}
+					connector = traverser;
+					traverser = traverser->nextCard; //The last from-- to make it 0
 				}
-				else {}
+				firstNew = traverser;
+				while (to --> 0 && traverser != this->deckBottom)
+				{
+					traverser = traverser->nextCard;
+				}
+				if (firstNew == this->deckTop)
+				{
+					this->deckTop = traverser->nextCard;
+				}
+				if (traverser == this->deckBottom)
+				{
+					this->deckBottom = connector;
+				}
+				connector->nextCard = traverser->nextCard; //does nothing if connector == dummy
+				lastNew = traverser;
+				lastNew->nextCard = nullptr;
+				//TO-DO: error if to != 0
 			}
-			else {}
+			else
+			{
+				//error
+			}
 			return new Deck(firstNew, lastNew);
 		}
 		void appened(Deck& other)
@@ -198,7 +224,8 @@ namespace Deck {
 
 	Deck* deck52()
 	{
-		CardsQueue* deckTop = new CardsQueue();
+		CardsQueue dummy = CardsQueue();
+		CardsQueue* deckTop = &dummy;
 		CardsQueue* deckBottom = deckTop;
 		Suites suite = Suites::SPADES;
 		Ranks rank = Ranks::ACE;
@@ -211,7 +238,7 @@ namespace Deck {
 				deckBottom = current;
 			}
 		}
-		deckTop->pop();
+		deckTop = deckTop->nextCard;
 		return new Deck(deckTop, deckBottom);
 	}
 }
