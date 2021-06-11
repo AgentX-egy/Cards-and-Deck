@@ -211,6 +211,16 @@ namespace Deck {
 		{
 			riffle(size, 1);
 		}
+		void shuffle(const int& size = 52)
+		{
+			const int cutAt1 = (rand() % (size - 2)) / 2 + 1;
+			const int cutAt2 = (rand() % (size - 2)) / 2 + 1;
+			Deck* d1 = this->cut(0, cutAt1);
+			Deck* d2 = this->cut(cutAt2);
+			d2->appened(d1);
+			this->appened(d2);
+			this->riffle(size);
+		}
 		void print()
 		{
 			CardsQueue* printNext = this->deckTop;
