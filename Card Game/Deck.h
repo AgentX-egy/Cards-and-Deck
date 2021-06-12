@@ -221,6 +221,18 @@ namespace Deck {
 			this->appened(d2);
 			this->riffle(size);
 		}
+		void flip() {
+			CardsQueue* prev = nullptr;
+			CardsQueue* curr = this->deckTop;
+			while (curr != nullptr) {
+				CardsQueue* nextTemp = curr->nextCard;
+				curr->nextCard = prev;
+				prev = curr;
+				curr = nextTemp;
+			}
+			this->deckBottom = this->deckTop;
+			this->deckTop = prev;
+		}
 		void print()
 		{
 			CardsQueue* printNext = this->deckTop;
