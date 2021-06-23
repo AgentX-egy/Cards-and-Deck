@@ -33,7 +33,7 @@ namespace {
 			}
 			else {} //recursively delete the entire queue, takes N+1 space
 		}
-		CardsQueue& operator =(const CardsQueue& other)
+			CardsQueue& operator =(const CardsQueue& other)
 		{
 			this->card = other.card;
 			this->nextCard = other.nextCard;
@@ -60,7 +60,6 @@ namespace {
 			else
 			{
 				delete this; //deletes the last card in the queue 
-				//NOTE: still errors Deck::pickACard if it is the last card
 			}
 			return card;
 		}
@@ -169,59 +168,88 @@ namespace Deck {
 		}
 		void appened(Deck& other)
 		{
-			if (this->deckBottom->nextCard == nullptr)
-			{
-				this->deckBottom->nextCard = other.deckTop;
-				this->deckBottom = other.deckBottom;
-			}
-			else
-			{
-				//error
-			}
+			this->deckBottom->nextCard = other.deckTop;
+			this->deckBottom = other.deckBottom;
 		}
-		inline void appened(Deck* other)
-		{
-			appened(*other);
-		}
-		void insert(Deck& other, const int& at)
+		void insert(Deck& other, int at)
 		{
 			CardsQueue* current = this->deckTop;
 			CardsQueue* post = current->nextCard;
-			for (int i = 1; i < at; i++)
+			while (at --> 0 && post != this->deckBottom)
 			{
 				current = current->nextCard;
 				post = current->nextCard;
 			}
-			if (other.deckBottom->nextCard == nullptr)
+			current->nextCard = other.deckTop;
+			other.deckBottom->nextCard = post;
+		}
+		void insert(CardsQueue* other, int at)
+		{
+			if (at > 0)
 			{
-				current->nextCard = other.deckTop;
-				other.deckBottom->nextCard = post;
+				CardsQueue* prev = this->deckTop;
+				CardsQueue* current = prev->nextCard;
+				while (at --> 1 && current != this->deckBottom)
+				{
+					prev = prev->nextCard;
+					current = prev->nextCard;
+				}
+				prev->nextCard = other;
+				other->nextCard = current;
 			}
 			else
 			{
-				//error
+				other->nextCard = this->deckTop;
+				this->deckTop = other;
 			}
 		}
-		inline void insert(Deck* other, const int& at)
+		inline void insert(const CardsQueue& other, const int& at)
 		{
-			insert(*other, at);
+			insert(new CardsQueue(std::move(other)), at);
 		}
-		Cards pickACard(int&& at)
+		inline void insert(const Cards& cards, const int& at)
 		{
-			CardsQueue* current = this->deckTop;
-			for (int i = 1; i < at; i++)
+			insert(new CardsQueue(cards), at);
+		}
+		Cards pickACard(int at)
+		{
+			Cards card;
+			CardsQueue* prev = this->deckTop;
+			CardsQueue* current = prev->nextCard;
+			if (at > 0 && current != nullptr)
 			{
-				current = current->nextCard;
+				while (at --> 1 && current != this->deckBottom)
+				{
+					prev = current;
+					current = current->nextCard;
+				}
+				const bool isLastCard = (current == this->deckBottom);
+				card = current->pop();
+				if (isLastCard)
+				{
+					this->deckBottom = prev;
+					prev->nextCard = nullptr;
+				}
+				else if (current->nextCard == nullptr) //current was pre-last
+				{
+					this->deckBottom = current;
+				}
+				else {}
 			}
-			return current->pop();
-		}
-		Cards pickACard(int& size)
-		{
-			return pickACard((rand() % size--) + 1);
-		}
-		Cards pickACard()
-		{
-			return pickACard((rand() % 52) + 1); //will error 1.9226% of the time. See Cards::Pop()
+			else
+			{
+				/*
+				* Note on why not use prev->pop():
+				* when deleting the last card, which is always indext/at 0,
+				* pop deletes it perfectly fine, however Deck obj still holdes a pointer (topDeck)
+				* to the deleted card. When the destructor is invoked, deleteing an already deleted node
+				* doesn't play out well. Specifically, ((CardsQueue*)ptr)->nextCard = nullptr;
+				*/
+				card = prev->card;
+				this->deckTop = current;
+				delete prev;
+			}
+			return card;
 		}
 		void riffle(const int& size = 52, const int& margin = 3)
 		{
