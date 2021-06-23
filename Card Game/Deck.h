@@ -165,11 +165,18 @@ namespace Deck {
 				//error
 			}
 			return Deck(firstNew, lastNew);
+			/*
+			* Cut is prone to errors as it returns a Deck obj which deletes its CardsQueue automatically.
+			* An error may occure if the cards in the deck is refrenced elsewhere in another deck.
+			* deck obj will delete the cards when out of scope, when the other deck try to delete the cards again, it leads to an error.
+			* to avoid an error, make use you use append on one another or handel one of the decks so they don't refrence the same Cards obj.
+			* e.g. deck.deckTop = nullptr; should suffice.
+			*/
 		}
-		void appened(Deck& other)
+		void append(Deck& other)
 		{
-			this->deckBottom->nextCard = other.deckTop;
-			this->deckBottom = other.deckBottom;
+			this->deckBottom->nextCard = std::exchange(other.deckTop, nullptr);
+			this->deckBottom = std::exchange(other.deckBottom, nullptr);
 		}
 		void insert(Deck& other, int at)
 		{
@@ -255,7 +262,7 @@ namespace Deck {
 		{
 			const int cutAt = (rand() % (margin * 2)) + (size / 2 - margin);
 			Deck dummy = this->cut(cutAt);
-			const Deck* const newCut = &dummy;
+			const Deck* const newCut = &dummy; //readability, doesn't do anything
 			CardsQueue* otherA = newCut->deckTop;
 			CardsQueue* otherB = this->deckTop;
 			while (otherA != newCut->deckBottom && otherB != this->deckBottom)
@@ -282,6 +289,7 @@ namespace Deck {
 			{
 				/* deckBottom will naturally be correct in a perfect ruffle */
 			}
+			dummy.deckTop = nullptr; //fix after the Big5 update, see Deck::Cut()
 		}
 		inline void perfectRiffle(const int& size = 52)
 		{
@@ -291,20 +299,22 @@ namespace Deck {
 		{
 			const int cutAt1 = (rand() % (size - 2)) / 2 + 1;
 			const int cutAt2 = (rand() % (size - 2)) / 2 + 1;
-			Deck d1 = this->cut(0, cutAt1);
-			Deck d2 = this->cut(cutAt2);
-			d2.appened(d1);
-			this->appened(d2);
+			{
+				Deck d1 = this->cut(0,cutAt1);
+				Deck d2 = this->cut(cutAt2);
+				d2.append(d1);
+				this->append(d2);
+			}
 			this->riffle(size);
 		}
 		void flip() {
 			CardsQueue* prev = nullptr;
-			CardsQueue* curr = this->deckTop;
-			while (curr != nullptr) {
-				CardsQueue* nextTemp = curr->nextCard;
-				curr->nextCard = prev;
-				prev = curr;
-				curr = nextTemp;
+			CardsQueue* current = this->deckTop;
+			while (current != nullptr) {
+				CardsQueue* nextTemp = current->nextCard;
+				current->nextCard = prev;
+				prev = current;
+				current = nextTemp;
 			}
 			this->deckBottom = this->deckTop;
 			this->deckTop = prev;
