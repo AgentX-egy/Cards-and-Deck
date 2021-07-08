@@ -3,15 +3,14 @@
 class Cards
 {
 private:
-	char CardID = NULL;
+	char CardID=0;
 public:
+	Cards() = default;
 	Cards(Ranks rank, Suites suite)
 	{
 		CardID |= (char)rank << 0;
 		CardID |= (char)suite << 4;
 	}
-	Cards() : CardID(0){};
-	friend std::ostream& operator << (std::ostream& out, const Cards& card);
 
 public:
 	Ranks getRank() const
@@ -22,16 +21,4 @@ public:
 	{
 		return Suites( (CardID & 0xF0) >> 4 );
 	}
-#ifdef _DEBUG
-	char getCardID()
-	{
-		return CardID;
-	}
-#endif //only in debug mode
 };
-
-std::ostream& operator<<(std::ostream& os, const Cards& card)
-{
-	os << card.getRank() << " of " << card.getSuite();
-	return os;
-}

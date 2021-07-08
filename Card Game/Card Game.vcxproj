@@ -24,6 +24,7 @@
     <ProjectGuid>{5fb500ee-325a-4559-b017-f7c3c05d9127}</ProjectGuid>
     <RootNamespace>CardGame</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+    <ProjectName>Cards</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -141,11 +142,15 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="Card Game.cpp" />
+    <ClCompile Include="Cards.cpp" />
+    <ClCompile Include="cmdPrint.cpp" />
+    <ClCompile Include="Deck.cpp" />
+    <ClCompile Include="incrementor++.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Cards.h" />
     <ClInclude Include="Deck.h" />
+    <ClInclude Include="incrementor++.h" />
     <ClInclude Include="SR.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
